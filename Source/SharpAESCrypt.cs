@@ -1,5 +1,5 @@
 #region Disclaimer / License
-// Copyright (C) 2014, Kenneth Skovhede
+// Copyright (C) 2015, Kenneth Skovhede
 // http://www.hexad.dk, opensource@hexad.dk
 // 
 // This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
  There are simple static functions that you can call:
     SharpAESCrypt.Encrypt("password", "inputfile", "outputfile");
     SharpAESCrypt.Decrypt("password", "inputfile", "outputfile");
-    SharpAESCrypt.Decrypt("password", inputStream, outputStream);
+    SharpAESCrypt.Encrypt("password", inputStream, outputStream);
     SharpAESCrypt.Decrypt("password", inputStream, outputStream);
 
  You can control what headers are emitted using the static 
@@ -609,15 +609,29 @@ namespace SharpAESCrypt
 
 
             /// <summary>
-            /// Creates the iv used for encrypting the actual key and IV.
-            /// This IV is calculated using the network MAC adress as input.
+            /// Creates the iv used for encrypting the bulk key and IV.
             /// </summary>
-            /// <returns>An IV</returns>
+            /// <returns>A random IV</returns>
             private byte[] GenerateIv1()
             {
                 byte[] iv = new byte[IV_SIZE];
                 long time = DateTime.Now.Ticks;
                 byte[] mac = null;
+
+                /**********************************************************************
+                *                                                                     *
+                *   NOTE: The time and mac are COMPONENTS in the random IV input.     *
+                *         The IV does not require the time or mac to be random.       *
+                *                                                                     *
+                *         The mac and time are used to INCREASE the ENTROPY, and      *
+                *         DECOUPLE the IV from the PRNG output, in case the PRNG      *
+                *         has a defect (intentional or not)                           *
+                *                                                                     *
+                *         Please review the DigestRandomBytes method before           *
+                *         INCORRECTLY ASSUMING that the IV is generated from          *
+                *         time and mac inputs.                                        *
+                *                                                                     *
+                ***********************************************************************/                
 
                 try
                 {
